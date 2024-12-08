@@ -61,7 +61,7 @@ jobs:
       run: |
         mkdir -p $GITHUB_WORKSPACE/kernel/toolchains && cd $GITHUB_WORKSPACE/kernel/toolchains 
         git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14.git zyc-clang
-
+        
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel/source/msm
