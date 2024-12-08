@@ -2,7 +2,7 @@
 
 # KernelSU Action
 
-用于 Non-GKI Kernel 的 Action，具有一定的普遍性，需要了解内核及 Android 的相关知识得以运用。基于https://github.com/xiaoleGun/KernelSU_Action修改。
+用于 Non-GKI Kernel 的 Action，具有一定的普遍性，需要了解内核及 Android 的相关知识得以运用。基于https://github.com/xiaoleGun/KernelSU_Action  修改。
 
 ## 警告:warning: :warning: :warning:
 
