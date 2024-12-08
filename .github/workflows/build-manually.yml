@@ -1,9 +1,7 @@
-name: Build Kernel manually
+name: Build Kernel
 on:
-  watch:
-    types: [started]
-
   workflow_dispatch:
+
 
 jobs:
   build:
