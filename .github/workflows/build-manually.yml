@@ -1,7 +1,6 @@
-name: Build Kernel
+name: Build Kernel automatically
 on:
   workflow_dispatch:
-
 
 jobs:
   build:
