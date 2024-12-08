@@ -60,10 +60,7 @@ jobs:
     - name: Download toolchain
       run: |
         mkdir -p $GITHUB_WORKSPACE/kernel/toolchains && cd $GITHUB_WORKSPACE/kernel/toolchains 
-        git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git gcc-arm-4.9
-        mkdir -p ./clang-14 && cd clang-14
-        wget https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20240212-release/Clang-14.0.6-20240212.tar.gz
-        tar -zxvf Clang-*.tar.gz
+        git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14.git zyc-clang
 
     - name: Build kernel
       run: |
