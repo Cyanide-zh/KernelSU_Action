@@ -1,0 +1,242 @@
+name: Build Kernel
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Kernel by ${{ github.actor }}
+    runs-on: ubuntu-22.04
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+    steps:
+    - uses: actions/checkout@v4
+    - name: Prepare Configuration
+      run: |
+        source_url=https://github.com/crdroidandroid/android_kernel_oneplus_sm8250
+        kernel_branch=16.0
+        source_name=android_kernel_oneplus_sm8250_crdroid_$kernel_branch
+        KERNEL_CONFIG=vendor/oplus.config
+
+
+    - name: Remove unused packages
+      if: env.REMOVE_UNUSED_PACKAGES == 'true'
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        android: false
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: false
+
+    - name: Set swap to 8G
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 8
+
+    - name: Setup build kernel environment
+      run: |
+        echo "BUILD_TIME=$(TZ=Asia/Shanghai date "+%Y%m%d%H%M")" 
+        echo "DEVICE=$(echo $KERNEL_CONFIG | sed 's!vendor/!!;s/_defconfig//;s/_user//;s/-perf//')" 
+        sudo apt-get update
+        sudo apt-get install git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
+        mkdir -p $GITHUB_WORKSPACE/Kernel
+
+    - name: Download Clang
+      run: |
+        cd $GITHUB_WORKSPACE/Kernel
+        mkdir toolchains && cd toolchains
+        git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14.git zyc-clang
+
+
+    - name: Download kernel source
+      run: |
+        cd $GITHUB_WORKSPACE/Kernel        
+        git clone -b $kernel_branch --depth=1 $source_url "$source_name"
+
+
+    - name: Setup KernelSU
+      #if: env.ENABLE_KERNELSU == 'true'
+      run: |
+        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+        KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
+        echo "UPLOADNAME=-KernelSU_$KSU_VERSION" 
+
+    - name: Setup Configuration for Kernel
+      run: |
+        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        #if [ ${{ env.APPLY_KSU_PATCH }} = true ]; then
+            #bash $GITHUB_WORKSPACE/patches/patches.sh
+            if grep -q "CONFIG_KSU" arch/arm64/configs/$KERNEL_CONFIG; then
+                sed -i 's/# CONFIG_KSU is not set/CONFIG_KSU=y/g' arch/arm64/configs/$KERNEL_CONFIG
+                sed -i 's/CONFIG_KSU=n/CONFIG_KSU=y/g' arch/arm64/configs/$KERNEL_CONFIG
+            else
+                echo "CONFIG_KSU=y" >> arch/arm64/configs/$KERNEL_CONFIG
+            fi
+        #fi
+        #if [ ${{ env.ADD_KPROBES_CONFIG }} = true -a ${{ env.APPLY_KSU_PATCH }} != true ]; then
+            echo "CONFIG_MODULES=y" >> arch/arm64/configs/$KERNEL_CONFIG
+            echo "CONFIG_KPROBES=y" >> arch/arm64/configs/$KERNEL_CONFIG
+            echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/$KERNEL_CONFIG
+            echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/$KERNEL_CONFIG
+        #fi
+        if [ ${{ env.ADD_OVERLAYFS_CONFIG }} = true ]; then
+            echo "CONFIG_OVERLAY_FS=y" >> arch/arm64/configs/$KERNEL_CONFIG
+        fi
+        #if [ ${{ env.DISABLE-LTO }} = true ]; then
+           # sed -i 's/CONFIG_LTO=y/CONFIG_LTO=n/' arch/arm64/configs/$KERNEL_CONFIG
+            #sed -i 's/CONFIG_LTO_CLANG=y/CONFIG_LTO_CLANG=n/' arch/arm64/configs/$KERNEL_CONFIG
+           # sed -i 's/CONFIG_THINLTO=y/CONFIG_THINLTO=n/' arch/arm64/configs/$KERNEL_CONFIG
+           # echo "CONFIG_LTO_NONE=y" >> arch/arm64/configs/$KERNEL_CONFIG
+       # fi
+       # if [ ${{ env.DISABLE_CC_WERROR }} = true ]; then
+         #   echo "CONFIG_CC_WERROR=n" >> arch/arm64/configs/$KERNEL_CONFIG
+       # fi
+       cat ./arch/arm64/configs/vendor/kona-perf_defconfig |grep -i kprobe ; sleep 3
+
+    - name: Setup ccache
+      if: env.ENABLE_CCACHE == 'true'
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: build-kernel-${{ env.DEVICE }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}
+        max-size: 2G
+   
+    - name: Download Anykernel3
+      run: |
+        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git
+        
+    - name: Build kernel
+      run: |
+        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        mkdir -p ./out/arch/arm64/boot/
+        touch ./out/arch/arm64/boot/dtbo.img #不编译dtbo,以后从zip文件里删掉占位符
+        cinfo="\x1b[38;2;79;155;250m"
+        cwarn="\x1b[38;2;255;200;97m"
+        cerror="\x1b[38;2;240;96;96m"
+        cno="\x1b[0"
+        echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时开始编译" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
+        echo -e "${cinfo}=============== Setup Some Export ===============${cno}"
+        # 内核工作目录
+        export KERNEL_DIR=$(pwd)
+        # 内核 defconfig 文件
+        export KERNEL_DEFCONFIG=vendor/kona-perf_defconfig
+        # 编译临时目录，避免污染根目录
+        export OUT=out
+        # anykernel3 目录
+        export ANYKERNEL3=${KERNEL_DIR}/AnyKernel3
+        # 内核 zip 刷机包名称
+        build_date=$(date +%Y-%m-%d)
+        export KERNEL_ZIP_NAME="KernelSU_instantnoodlep.zip"
+        # 刷机包打包完成后移动目录
+        export KERNEL_ZIP_EXPORT=$GITHUB_WORKSPACE"/Kernel"
+        # clang 绝对路径
+        export CLANG_PATH=$GITHUB_WORKSPACE/Kernel/toolchains/zyc-clang 
+        export PATH=${CLANG_PATH}/bin:${PATH}
+        export CLANG_TRIPLE=aarch64-linux-gnu-
+        # arch平台，这里时arm64
+        export ARCH=arm64
+        export SUBARCH=arm64
+        # 只使用clang编译需要配置
+        export LLVM=1
+        export BUILD_INITRAMFS=1
+
+        # 编译时线程指定，默认单线程，可以通过参数指定，比如4线程编译
+
+        TH_COUNT=$(nproc --all) #github actions用这个线程数
+        if [[ "" != "$1" ]]; then
+                TH_NUM=$6
+        fi
+
+        # 编译参数
+        export DEF_ARGS="O=${OUT} \
+                                        CC=clang \
+                                        CXX=clang++ \
+                                        ARCH=${ARCH} \
+                                        CROSS_COMPILE=${CLANG_PATH}/bin/aarch64-linux-gnu- \
+                                        CROSS_COMPILE_ARM32=${CLANG_PATH}/bin/arm-linux-gnueabi- \
+                                        LD=ld.lld "
+        export BUILD_ARGS="-j$(nproc --all) ${DEF_ARGS}" 
+
+        echo -e "${cwarn}kernel workspace dir is => ${KERNEL_DIR}"
+        echo -e "kernel build defonfig is => ${KERNEL_DEFCONFIG}"
+        echo -e "build tmpdir is => ${KERNEL_DIR}/${OUT}"
+        echo -e "anykernel3 workspace dir is => ${ANYKERNEL3}"
+        echo -e "kernel zip name is => ${KERNEL_ZIP_NAME}"
+        echo -e "kernel zip export dir is => ${KERNEL_ZIP_EXPORT}"
+        echo -e "clang path is => ${CLANG_PATH}"
+        echo -e "build arch/subarch is => ${ARCH} / ${SUBARCH}${cno}"
+        # 等待3s，查看配置文件信息是否正确，不正确及时取消
+        sleep 3s
+
+        echo -e "${cinfo}=============== Make defconfig ===============${cno}"
+        # make defconfig
+        make ${DEF_ARGS} ${KERNEL_DEFCONFIG}
+        # 如果命令没有出错，继续执行，否则退出编译
+        if [[ "0" != "$?" ]]; then
+                echo -e "${cerror}>>> make defconfig error, build stop!${cno}"
+                exit 1
+        fi
+
+        echo -e "${cinfo}=============== Make Kernel  ===============${cno}"
+        make ${BUILD_ARGS}
+        if [[ "0" != "$?" ]]; then
+                echo -e "${cerror}>>> build kernel error, build stop!${cno}"
+                exit 1
+        fi
+        echo -e "${cwarn}>>> build kernel success${cno}"
+        sleep 2s
+        echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成编译" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
+        # 使用 Anykernel3 制作刷机包
+        echo -e "${cinfo}=============== Make Kernel Zip ==============="
+        if test -e ${ANYKERNEL3}; then
+                if test -e ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/dtbo.img; then
+                        if test -e ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/Image.gz-dtb; then
+                                echo -e "${cwarn}move kernel files . . .${cno}"
+                                cp ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/dtbo.img ${ANYKERNEL3}/
+                                cp ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/Image.gz-dtb ${ANYKERNEL3}/
+                                echo -e "${cwarn}into anykernel3 workdir. . ."
+                                cd ${ANYKERNEL3}
+                                if test -e ./Image.gz-dtb; then
+                                        zip -r ${KERNEL_ZIP_NAME} ./*
+                                        test -e ./${KERNEL_ZIP_NAME} && mv ./${KERNEL_ZIP_NAME} ${KERNEL_ZIP_EXPORT}
+                                        echo -e "${cwarn} clean kernel files. . .${cno}"
+                                        test -e ./Image.gz-dtb && rm ./Image.gz-dtb
+                                        test -e ./dtbo.img && rm ./dtbo.img
+                                else
+                                        echo -e "${cerror}stopmake => kernel file not found!${cno}"
+                                        exit 1
+                                fi
+                        else
+                                echo -e "${cerror}stop make => Image.gz-dtb not found${cno}"
+                                exit 1
+                        fi
+                else
+                        echo -e "${cerror}stop make => dtbo.img not found${cno}"
+                        exit 1
+                fi
+        else
+                echo -e "${cerror}stop build => anykernel3 dir not found${cno}"
+                exit 1
+        fi
+        echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成全过程" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
+        cat $GITHUB_WORKSPACE/Kernel/build_time.txt
+        exit 0
+
+
+
+
+
+    - name: Upload AnyKernel3
+      #if: env.CHECK_FILE_IS_OK == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: KernelSU_instantnoodlep.zip
+        path: Kernel/*.zip
+
+
+
