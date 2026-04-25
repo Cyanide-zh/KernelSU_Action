@@ -51,12 +51,10 @@ jobs:
         mkdir toolchains && cd toolchains
         git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14.git zyc-clang
 
-
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/Kernel        
         git clone -b $kernel_branch --depth=1 $source_url "$source_name"
-
 
     - name: Setup KernelSU
       #if: env.ENABLE_KERNELSU == 'true'
@@ -104,11 +102,13 @@ jobs:
       with:
         key: build-kernel-${{ env.DEVICE }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}
         max-size: 2G
+
    
     - name: Download Anykernel3
       run: |
         cd $GITHUB_WORKSPACE/Kernel/"$source_name"
         git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git
+
         
     - name: Build kernel
       run: |
@@ -226,11 +226,6 @@ jobs:
         echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成全过程" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
         cat $GITHUB_WORKSPACE/Kernel/build_time.txt
         
-
-
-
-
-
     - name: Upload AnyKernel3
       #if: env.CHECK_FILE_IS_OK == 'true'
       uses: actions/upload-artifact@v4
