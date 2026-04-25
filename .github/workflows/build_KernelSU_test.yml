@@ -59,7 +59,7 @@ jobs:
     - name: Setup KernelSU
       #if: env.ENABLE_KERNELSU == 'true'
       run: |
-        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        cd $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
         KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
         echo "UPLOADNAME=-KernelSU_$KSU_VERSION"
@@ -67,7 +67,7 @@ jobs:
     
     - name: Setup Configuration for Kernel
       run: |
-        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        cd $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}
         #if [ ${{ env.APPLY_KSU_PATCH }} = true ]; then
             #bash $GITHUB_WORKSPACE/patches/patches.sh
             if grep -q "CONFIG_KSU" arch/arm64/configs/${{ env.KERNEL_CONFIG }}; then
@@ -107,7 +107,7 @@ jobs:
    
     - name: Download Anykernel3
       run: |
-        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        cd $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}
         git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git
 
         
@@ -115,7 +115,7 @@ jobs:
         
     - name: Build kernel
       run: |
-        cd $GITHUB_WORKSPACE/Kernel/"$source_name"
+        cd $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}
         mkdir -p ./out/arch/arm64/boot/
         touch ./out/arch/arm64/boot/dtbo.img #不编译dtbo,以后从zip文件里删掉占位符
         cinfo="\x1b[38;2;79;155;250m"
