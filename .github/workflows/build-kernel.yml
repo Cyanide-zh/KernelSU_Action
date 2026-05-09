@@ -108,7 +108,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: instantnoodlep
-        path: Kernel/*.zip
+        path: /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/*.zip
 
 
 
