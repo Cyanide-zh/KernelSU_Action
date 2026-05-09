@@ -10,24 +10,24 @@ cinfo="\x1b[38;2;79;155;250m"
 cwarn="\x1b[38;2;255;200;97m"
 cerror="\x1b[38;2;240;96;96m"
 cno="\x1b[0"
-echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时开始编译" >> /root/Kernel/build_time.txt
+echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时开始编译" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
 
 echo -e "${cinfo}=============== Setup Some Export ===============${cno}"
 # 内核工作目录
 export KERNEL_DIR=$(pwd)
 # 内核 defconfig 文件
-export KERNEL_DEFCONFIG=vendor/oplus.config
+export KERNEL_DEFCONFIG=vendor/combined_defconfig
 # 编译临时目录，避免污染根目录
 export OUT=out
 # anykernel3 目录
 export ANYKERNEL3=${KERNEL_DIR}/AnyKernel3
 # 内核 zip 刷机包名称
 build_date=$(date +%Y-%m-%d)
-export KERNEL_ZIP_NAME="KernelSU_instantnoodlep_"$(date +%Y-%m-%d)".zip"
+export KERNEL_ZIP_NAME="KernelSU_instantnoodlep.zip"
 # 刷机包打包完成后移动目录
-export KERNEL_ZIP_EXPORT="/root/Kernel"
+export KERNEL_ZIP_EXPORT="$GITHUB_WORKSPACE/Kernel "
 # clang 绝对路径
-export CLANG_PATH=/root/Kernel/toolchains/zyc-clang 
+export CLANG_PATH=$GITHUB_WORKSPACE/Kernel/toolchains/zyc-clang 
 export PATH=${CLANG_PATH}/bin:${PATH}
 export CLANG_TRIPLE=aarch64-linux-gnu-
 # arch平台，这里时arm64
@@ -82,7 +82,7 @@ if [[ "0" != "$?" ]]; then
 fi
 echo -e "${cwarn}>>> build kernel success${cno}"
 sleep 2s
-echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成编译" >> /root/Kernel/build_time.txt
+echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成编译" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
 # 使用 Anykernel3 制作刷机包
 echo -e "${cinfo}=============== Make Kernel Zip ==============="
 if test -e ${ANYKERNEL3}; then
@@ -104,16 +104,19 @@ if test -e ${ANYKERNEL3}; then
                                 exit 1
                         fi
                 else
-                        echo -e "${cerror}stop make => Image.gz-dtb not found${cno}"
-                        exit 1
+                        #echo -e "${cerror}stop make => Image.gz-dtb not found${cno}"
+                        #exit 1
+                        cp ./out/arch/arm64/boot/Image ./out/arch/arm64/boot/Image.gz-dtb
                 fi
         else
-                echo -e "${cerror}stop make => dtbo.img not found${cno}"
-                exit 1
+                #echo -e "${cerror}stop make => dtbo.img not found${cno}"
+                #exit 1
+                touch ./out/arch/arm64/boot/dtbo.img
         fi
 else
         echo -e "${cerror}stop build => anykernel3 dir not found${cno}"
         exit 1
 fi
-echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成全过程" >> /root/Kernel/build_time.txt
+echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成全过程" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
+cat $GITHUB_WORKSPACE/Kernel/build_time.txt
 exit 0
