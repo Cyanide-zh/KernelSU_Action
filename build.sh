@@ -10,6 +10,7 @@ cinfo="\x1b[38;2;79;155;250m"
 cwarn="\x1b[38;2;255;200;97m"
 cerror="\x1b[38;2;240;96;96m"
 cno="\x1b[0"
+export TZ='Asia/Shanghai'
 echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时开始编译" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
 
 echo -e "${cinfo}=============== Setup Some Export ===============${cno}"
@@ -95,7 +96,7 @@ if test -e ${ANYKERNEL3}; then
                         cd ${ANYKERNEL3}
                         if test -e ./Image.gz-dtb; then
                                 zip -r ${KERNEL_ZIP_NAME} ./*
-                                test -e ./${KERNEL_ZIP_NAME} && mv ./${KERNEL_ZIP_NAME} ${KERNEL_ZIP_EXPORT}
+                                test -e ./${KERNEL_ZIP_NAME} && cp ./${KERNEL_ZIP_NAME} ${KERNEL_ZIP_EXPORT}
                                 echo -e "${cwarn} clean kernel files. . .${cno}"
                                 test -e ./Image.gz-dtb && rm ./Image.gz-dtb
                                 test -e ./dtbo.img && rm ./dtbo.img
