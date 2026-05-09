@@ -102,6 +102,10 @@ jobs:
         cd $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}
         chmod +x ./build.sh ;  ./build.sh
 
+    - name: Show artifacts
+      run: |
+        ls -lh /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/
+        ls -lh /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/${{ env.source_name }}/out
         
     - name: Upload AnyKernel3
       #if: env.CHECK_FILE_IS_OK == 'true'
