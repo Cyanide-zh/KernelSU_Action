@@ -19,6 +19,10 @@ jobs:
         echo "source_name=android_kernel_oneplus_sm8250" >> $GITHUB_ENV
         echo "KERNEL_CONFIG=vendor/combined_defconfig" >> $GITHUB_ENV
 
+    - name: Check Configuration
+      run: |
+        echo 'kernel_branch:'"${{ env.kernel_branch }}" ; echo ' source_url:'"${{ env.source_url }}"   ; 
+        echo 'source_name:' ${{ env.source_name }}  ; echo ' defconfig:'  ${{ env.KERNEL_CONFIG }}
 
     - name: Remove unused packages
       if: env.REMOVE_UNUSED_PACKAGES == 'true'
@@ -41,7 +45,6 @@ jobs:
       run: |
         echo 'kernel_branch:'"${{ env.kernel_branch }}" ; echo ' source_url:'"${{ env.source_url }}"   ; 
         echo 'source_name:' ${{ env.source_name }}  ; echo ' defconfig:'  ${{ env.KERNEL_CONFIG }}
-        echo 'git clone -b '${{ env.kernel_branch }} '--depth=1 '${{ env.source_url }} ${{ env.source_name }} ${{ env.KERNEL_CONFIG }}
         echo "BUILD_TIME=$(TZ=Asia/Shanghai date "+%Y-%m-%d_%H-%M")" 
         echo "DEVICE=$(echo ${{ env.KERNEL_CONFIG }} | sed 's!vendor/!!;s/_defconfig//;s/_user//;s/-perf//')" 
         sudo apt-get update
@@ -58,7 +61,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/Kernel        
         git clone -b ${{ env.kernel_branch }} --depth=1 ${{ env.source_url }} ${{ env.source_name }}
-        cat ./arch/arm64/configs/vendor/kona-perf_defconfig ./arch/arm64/configs/vendor/oplus.config > ./arch/arm64/configs/vendor/${{ env.KERNEL_CONFIG }}
+        cat ./${{ env.source_name }}/arch/arm64/configs/vendor/kona-perf_defconfig ./${{ env.source_name }}/arch/arm64/configs/vendor/oplus.config > ./${{ env.source_name }}/arch/arm64/configs/vendor/${{ env.KERNEL_CONFIG }}
 
     - name: Setup KernelSU
       #if: env.ENABLE_KERNELSU == 'true'
