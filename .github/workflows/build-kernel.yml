@@ -106,13 +106,14 @@ jobs:
       run: |
         ls -lh /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/
         ls -lh /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/${{ env.source_name }}/out
+        ls -lh /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/${{ env.source_name }}/AnyKernel3
         
     - name: Upload AnyKernel3
       #if: env.CHECK_FILE_IS_OK == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: instantnoodlep
-        path: /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/*.zip
+        path: /home/runner/work/KernelSU_Action/KernelSU_Action/Kernel/${{ env.source_name }}/AnyKernel3/*.zip
 
 
 
