@@ -39,7 +39,7 @@ export BUILD_INITRAMFS=1
 
 # 编译时线程指定，默认单线程，可以通过参数指定，比如4线程编译
 # ./build.sh 12
-TH_COUNT=12
+TH_COUNT=$(nproc --all) #使用所有线程
 if [[ "" != "$1" ]]; then
         TH_NUM=$6
 fi
