@@ -16,8 +16,8 @@ jobs:
       run: |
         echo "source_url=https://github.com/crdroidandroid/android_kernel_oneplus_sm8250" >> $GITHUB_ENV
         echo "kernel_branch=16.0" >> $GITHUB_ENV
-        echo "source_name=android_kernel_oneplus_sm8250_crdroid" >> $GITHUB_ENV
-        echo "KERNEL_CONFIG=vendor/oplus.config" >> $GITHUB_ENV
+        echo "source_name=android_kernel_oneplus_sm8250" >> $GITHUB_ENV
+        echo "KERNEL_CONFIG=vendor/combined_defconfig" >> $GITHUB_ENV
 
 
     - name: Remove unused packages
@@ -55,6 +55,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/Kernel        
         git clone -b ${{ env.kernel_branch }} --depth=1 ${{ env.source_url }} ${{ env.source_name }} ${{ env.KERNEL_CONFIG }}
+        cat ./arch/arm64/configs/vendor/kona-perf_defconfig ./arch/arm64/configs/vendor/oplus.config > ./arch/arm64/configs/vendor/${{ env.KERNEL_CONFIG }}
 
     - name: Setup KernelSU
       #if: env.ENABLE_KERNELSU == 'true'
@@ -63,6 +64,13 @@ jobs:
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
         KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)
         echo "UPLOADNAME=-KernelSU_$KSU_VERSION"
+        sed -i 's/# CONFIG_KSU is not set/CONFIG_KSU=y/g' arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        sed -i 's/CONFIG_KSU=n/CONFIG_KSU=y/g' arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_MODULES=y" >> arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        cat ./arch/arm64/configs/vendor/${{ env.KERNEL_CONFIG }} |grep -i kprobe ; sleep 3
 
 
     - name: Setup ccache
@@ -84,13 +92,14 @@ jobs:
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}
+        chmod +x ./build.sh ;  ./build.sh
 
         
     - name: Upload AnyKernel3
       #if: env.CHECK_FILE_IS_OK == 'true'
       uses: actions/upload-artifact@v4
       with:
-        name: KernelSU_instantnoodlep.zip
+        name: instantnoodlep.zip
         path: Kernel/*.zip
 
 
