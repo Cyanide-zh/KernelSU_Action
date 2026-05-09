@@ -120,4 +120,6 @@ else
 fi
 echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成全过程" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
 cat $GITHUB_WORKSPACE/Kernel/build_time.txt
+ls -lh ${KERNEL_ZIP_EXPORT}
+ls -lh ./out/
 exit 0
