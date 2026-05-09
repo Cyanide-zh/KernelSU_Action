@@ -87,10 +87,11 @@ echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成编译" >> $GITHUB_WORKSPACE/Ker
 # 使用 Anykernel3 制作刷机包
 echo -e "${cinfo}=============== Make Kernel Zip ==============="
 if test -e ${ANYKERNEL3}; then
-        if test -e ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/dtbo.img; then
-                if test -e ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/Image.gz-dtb; then
+        #if test -e ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/dtbo.img; then #dtbo
+                cp ./out/arch/arm64/boot/Image ./out/arch/arm64/boot/Image.gz-dtb
+                #if test -e ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/Image.gz-dtb; then #Image.gz-dtb
                         echo -e "${cwarn}move kernel files . . .${cno}"
-                        cp ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/dtbo.img ${ANYKERNEL3}/
+                        #cp ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/dtbo.img ${ANYKERNEL3}/
                         cp ${KERNEL_DIR}/${OUT}/arch/${ARCH}/boot/Image.gz-dtb ${ANYKERNEL3}/
                         echo -e "${cwarn}into anykernel3 workdir. . ."
                         cd ${ANYKERNEL3}
@@ -99,26 +100,26 @@ if test -e ${ANYKERNEL3}; then
                                 test -e ./${KERNEL_ZIP_NAME} && cp ./${KERNEL_ZIP_NAME} ${KERNEL_ZIP_EXPORT}
                                 echo -e "${cwarn} clean kernel files. . .${cno}"
                                 test -e ./Image.gz-dtb && rm ./Image.gz-dtb
-                                test -e ./dtbo.img && rm ./dtbo.img
+                                #test -e ./dtbo.img && rm ./dtbo.img
                         else
                                 echo -e "${cerror}stopmake => kernel file not found!${cno}"
                                 exit 1
                         fi
-                else
+                #else
                         #echo -e "${cerror}stop make => Image.gz-dtb not found${cno}"
                         #exit 1
-                        cp ./out/arch/arm64/boot/Image ./out/arch/arm64/boot/Image.gz-dtb
-                fi
-        else
-                echo  "Warning: dtbo.img not found"
+                        #cp ./out/arch/arm64/boot/Image ./out/arch/arm64/boot/Image.gz-dtb
+                #fi
+        #else #dtbo
+                #echo  "Warning: dtbo.img not found"
                 #touch ./out/arch/arm64/boot/dtbo.img
-        fi
+        #fi #dtbo
 else
         echo -e "${cerror}stop build => anykernel3 dir not found${cno}"
         exit 1
 fi
-cd ${ANYKERNEL3} ； zip -r ${KERNEL_ZIP_NAME} ./*
-cp ./${KERNEL_ZIP_NAME} ${KERNEL_ZIP_EXPORT}
+#cd ${ANYKERNEL3} ； zip -r ${KERNEL_ZIP_NAME} ./*
+#cp ./${KERNEL_ZIP_NAME} ${KERNEL_ZIP_EXPORT}
 echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成全过程" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
 cat $GITHUB_WORKSPACE/Kernel/build_time.txt
 exit 0
