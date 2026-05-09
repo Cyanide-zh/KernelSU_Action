@@ -97,6 +97,7 @@ jobs:
         
     - name: Build kernel
       run: |
+        cp $GITHUB_WORKSPACE/build.sh $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}/build.sh ;
         cd $GITHUB_WORKSPACE/Kernel/${{ env.source_name }}
         chmod +x ./build.sh ;  ./build.sh
 
