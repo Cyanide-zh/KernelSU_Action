@@ -117,6 +117,8 @@ else
         echo -e "${cerror}stop build => anykernel3 dir not found${cno}"
         exit 1
 fi
+cd ${ANYKERNEL3} ； zip -r ${KERNEL_ZIP_NAME} ./*
+cp ./${KERNEL_ZIP_NAME} ${KERNEL_ZIP_EXPORT}
 echo "在""$(date +%Y-%m-%d_%H-%M-%S)""时完成全过程" >> $GITHUB_WORKSPACE/Kernel/build_time.txt
 cat $GITHUB_WORKSPACE/Kernel/build_time.txt
 exit 0
