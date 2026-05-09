@@ -110,9 +110,8 @@ if test -e ${ANYKERNEL3}; then
                         cp ./out/arch/arm64/boot/Image ./out/arch/arm64/boot/Image.gz-dtb
                 fi
         else
-                #echo -e "${cerror}stop make => dtbo.img not found${cno}"
-                #exit 1
-                touch ./out/arch/arm64/boot/dtbo.img
+                echo  "Warning: dtbo.img not found"
+                #touch ./out/arch/arm64/boot/dtbo.img
         fi
 else
         echo -e "${cerror}stop build => anykernel3 dir not found${cno}"
