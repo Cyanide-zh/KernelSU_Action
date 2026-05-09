@@ -61,7 +61,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/Kernel        
         git clone -b ${{ env.kernel_branch }} --depth=1 ${{ env.source_url }} ${{ env.source_name }}
-        cat ./${{ env.source_name }}/arch/arm64/configs/vendor/kona-perf_defconfig ./${{ env.source_name }}/arch/arm64/configs/vendor/oplus.config > ./${{ env.source_name }}/arch/arm64/configs/vendor/${{ env.KERNEL_CONFIG }}
+        cat ./${{ env.source_name }}/arch/arm64/configs/vendor/kona-perf_defconfig ./${{ env.source_name }}/arch/arm64/configs/vendor/oplus.config > ./${{ env.source_name }}/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
 
     - name: Setup KernelSU
       #if: env.ENABLE_KERNELSU == 'true'
@@ -76,7 +76,7 @@ jobs:
         echo "CONFIG_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_CONFIG }}
         echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${{ env.KERNEL_CONFIG }}
         echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${{ env.KERNEL_CONFIG }}
-        cat ./arch/arm64/configs/vendor/${{ env.KERNEL_CONFIG }} |grep -i kprobe ; sleep 3
+        cat ./arch/arm64/configs/${{ env.KERNEL_CONFIG }} |grep -i kprobe ; sleep 3
 
 
     - name: Setup ccache
