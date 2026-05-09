@@ -18,7 +18,9 @@ jobs:
         echo "kernel_branch=16.0" >> $GITHUB_ENV
         echo "source_name=android_kernel_oneplus_sm8250" >> $GITHUB_ENV
         echo "KERNEL_CONFIG=vendor/combined_defconfig" >> $GITHUB_ENV
-
+        echo 'kernel_branch:'"${{ env.kernel_branch }}" ; echo ' source_url:'"${{ env.source_url }}"   ; 
+        echo 'source_name:' ${{ env.source_name }}  ; echo ' defconfig:'  ${{ env.KERNEL_CONFIG }}
+        echo 'git clone -b '${{ env.kernel_branch }} '--depth=1 '${{ env.source_url }} ${{ env.source_name }} ${{ env.KERNEL_CONFIG }}
 
     - name: Remove unused packages
       if: env.REMOVE_UNUSED_PACKAGES == 'true'
